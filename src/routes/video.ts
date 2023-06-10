@@ -50,11 +50,17 @@ export class Video {
     }
 
     download() {
+        // @ts-ignore
         saveAs(this.videoUri, this.name, 'video/mp4');
     }
 }
 
-export class VideoProperties {
+export interface Properties {
+    duration: number;
+    size: number;
+}
+
+export class VideoProperties implements Properties{
     private readonly video: Video;
     duration: number = NaN;
     size: number = NaN;
@@ -87,5 +93,4 @@ export class VideoProperties {
         await result.load();
         return result;
     }
-
 }
