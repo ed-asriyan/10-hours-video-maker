@@ -8,7 +8,7 @@
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"postinstall": "cp node_modules/coi-serviceworker/coi-serviceworker.min.js static/coi-serviceworker.min.js"
+		"postinstall": "mkdir -p static && cp node_modules/coi-serviceworker/coi-serviceworker.min.js static/coi-serviceworker.min.js"
 	},
 	"devDependencies": {
 		"@ffmpeg/core": "^0.11.0",
