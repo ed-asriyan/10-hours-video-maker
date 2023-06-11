@@ -15,38 +15,54 @@ export class Video {
     }
 
     async loop(loopCount: number): Promise<Video> {
-        const newName = `NEW ${this.name}`;
-        this.ffmpeg.FS('writeFile', this.name, await fetchFile(this.videoUri));
-        await this.ffmpeg.run(
-            '-stream_loop',
-            (loopCount - 1).toString(),
-            '-i',
-            this.name,
-            // '-c:v', 'libx264',
-            // '-crf', '18',
-            // '-preset', 'veryslow',
-            '-c:a',
-            'copy',
-            '-c:v',
-            'copy',
-            'output.mp4'
-        );
-        const data = this.ffmpeg.FS('readFile', 'output.mp4')
-        return new Video(this.ffmpeg, newName, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
+        const fsSourceName = `LOOP ${this.name}`;
+        const fsDistName = `LOOPED ${this.name}`;
+
+        try {
+            this.ffmpeg.FS('writeFile', fsSourceName, await fetchFile(this.videoUri));
+            await this.ffmpeg.run(
+                '-stream_loop',
+                (loopCount - 1).toString(),
+                '-i',
+                fsSourceName,
+                // '-c:v', 'libx264',
+                // '-crf', '18',
+                // '-preset', 'veryslow',
+                '-c:a',
+                'copy',
+                '-c:v',
+                'copy',
+                fsDistName,
+            );
+            const data = this.ffmpeg.FS('readFile', fsDistName);
+            return new Video(this.ffmpeg, this.name, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
+        } finally {
+            this.ffmpeg.FS('unlink', fsSourceName);
+            this.ffmpeg.FS('unlink', fsDistName);
+        }
     }
 
-    async compress(): Promise<Video> {
-        const newName = `compressed ${this.name}`;
-        this.ffmpeg.FS('writeFile', this.name, await fetchFile(this.videoUri));
+    async compress () {
+        const fsSourceName = `COMPRESS ${this.name}`;
+        const fsDistName = `COMPRESSED ${this.name}`;
 
-        await this.ffmpeg.run(
-            '-i',
-            this.name,
-            ...'-vf scale=420:-2,setsar=1:1 -c:v libx264 -pix_fmt yuv420p'.split(' '),
-            'compressed.mp4',
-        );
-        const data = this.ffmpeg.FS('readFile', 'compressed.mp4');
-        return new Video(this.ffmpeg, newName, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
+        try {
+            this.ffmpeg.FS('writeFile', fsSourceName, await fetchFile(this.videoUri));
+            await this.ffmpeg.run(
+                '-i',
+                fsSourceName,
+                '-vf', 'scale=420:-2,setsar=1:1',
+                '-c:v', 'libx264',
+                '-pix_fmt', 'yuv420p',
+                fsDistName,
+            );
+
+            const data = this.ffmpeg.FS('readFile', fsDistName);
+            return new Video(this.ffmpeg, this.name, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
+        } finally {
+            this.ffmpeg.FS('unlink', fsSourceName);
+            this.ffmpeg.FS('unlink', fsDistName);
+        }
     }
 
     download() {
@@ -60,7 +76,7 @@ export interface Properties {
     size: number;
 }
 
-export class VideoProperties implements Properties{
+export class VideoProperties implements Properties {
     private readonly video: Video;
     duration: number = NaN;
     size: number = NaN;

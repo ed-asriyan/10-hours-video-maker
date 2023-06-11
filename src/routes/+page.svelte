@@ -2,11 +2,12 @@
     import {createFFmpeg} from '@ffmpeg/ffmpeg';
     import VideoSelector from './video-selector.svelte';
 
-    let messageLog: string;
+    let logs: string[] = [];
 
     const ffmpeg = createFFmpeg({log: true});
     ffmpeg.setLogger(({message}) => {
-        messageLog = message;
+        logs.push(message);
+        logs = logs;
     })
     const fetchingFfmpeg = ffmpeg.load();
 </script>
@@ -17,10 +18,18 @@
     <VideoSelector ffmpeg="{ffmpeg}"/>
 
     <hr/>
-
-    <div>
-        {messageLog}
+    <div class="log">
+        {#each logs as log}
+            <div>{log}</div>
+        {/each}
     </div>
 {:catch e}
     Error :( {e}
 {/await}
+
+<style>
+    .log {
+        height: 100px;
+        overflow-y: scroll;
+    }
+</style>

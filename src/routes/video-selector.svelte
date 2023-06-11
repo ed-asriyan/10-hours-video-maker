@@ -40,7 +40,7 @@
 <input type="file" on:change={({target: {files}}) => source = loadSource(files[0])}/>
 {#if source}
     {#await source}
-        <div>loading</div>
+        <div>Compressing video</div>
     {:then source}
         <div>
             <VideoView video={source.video}/>

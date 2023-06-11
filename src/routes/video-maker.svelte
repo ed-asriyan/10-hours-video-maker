@@ -1,20 +1,26 @@
 <script lang="ts">
     import VideoView from './video-view.svelte';
-    import type {Properties, Video, VideoProperties} from './video';
-    import {formatDuration, formatSize} from './utils';
+    import type {Properties, Video} from './video';
+    import {VideoProperties} from './video';
+    import {formatSize} from './utils';
+    import storageLimit from './storage-limit';
 
     export let video: Video;
     export let properties: VideoProperties;
 
-    let loopCount: number = Math.ceil(36000 / properties?.duration) + 1;
-    $: resultProperties = {
-        size: properties.size * loopCount,
-        duration: properties.duration * loopCount
+    let targetDurationMinutes: number = 600;
+
+    $: targetDuration = targetDurationMinutes * 60;
+    $: targetLoopCount = Math.ceil(targetDuration / properties.duration);
+
+    $: forecastProperties = {
+        size: properties.size * targetLoopCount,
+        duration: properties.duration * targetLoopCount
     } as Properties;
 
     let result: Promise<Video>;
-    const make = function (video: Video, loopCount: number) {
-        return video?.loop(loopCount);
+    const make = async function (video: Video, loopCount: number) {
+        return await video.loop(loopCount);
     };
 
     const download = function (video: Video) {
@@ -22,18 +28,30 @@
     };
 </script>
 
-<div>Loop count: <input type="number" bind:value={loopCount} min="0"/></div>
-<div>Duration: {formatDuration(resultProperties.duration)}</div>
-<div>Size: {formatSize(resultProperties.size)}</div>
-
-<button on:click={() => result = make(video, loopCount)}>Run!</button>
+<div>Duration (minutes): <input type="number" bind:value={targetDurationMinutes} min="0"/></div>
+<br/>
+<div>Size forecast: {formatSize(forecastProperties.size)}.</div>
+{#if forecastProperties.size > storageLimit}
+    <div style="color: red">
+        Conversion will fail since it exceeds your browser storage size: {Math.round(storageLimit / 1024 / 1024)}Mb.
+    </div>
+{/if}
+<button on:click={() => result = make(video, targetLoopCount)}>Run!</button>
 
 {#if result}
     {#await result}
-        Running
-    {:then r}
-        <div><VideoView video={r}/></div>
-        <div><button on:click={() => download(r)}>Download</button></div>
+        Running...
+    {:then resultVideo}
+        <div>
+            <VideoView video={resultVideo}/>
+        </div>
+        <div>
+            <button on:click={() => download(resultVideo)}>Download</button>
+            {#await VideoProperties.load(resultVideo)}
+            {:then resultVideoProperties}
+                <span>Size: {formatSize(resultVideoProperties.size)}</span>
+            {/await}
+        </div>
     {:catch e}
         {e}
     {/await}
