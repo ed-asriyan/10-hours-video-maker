@@ -2,6 +2,43 @@ import type {FFmpeg} from '@ffmpeg/ffmpeg';
 import {fetchFile} from '@ffmpeg/ffmpeg';
 import {saveAs} from 'file-saver';
 
+let i = 0;
+
+let isRunning = false;
+
+export enum CompressType {
+    'u420',
+    'u240',
+    'u140',
+    'u64',
+}
+
+const sleep = function (ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+};
+
+const compress: {[x in CompressType]: string[]} = {
+    [CompressType.u64]: [
+        '-vf', 'scale=64:-2,setsar=1:1',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+    ],
+    [CompressType.u140]: [
+        '-vf', 'scale=140:-2,setsar=1:1',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+    ],
+    [CompressType.u240]: [
+        '-vf', 'scale=240:-2,setsar=1:1',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+    ],
+    [CompressType.u420]: [
+        '-vf', 'scale=420:-2,setsar=1:1',
+        '-c:v', 'libx264',
+        '-pix_fmt', 'yuv420p',
+    ],
+};
 
 export class Video {
     private readonly ffmpeg: FFmpeg;
@@ -15,8 +52,14 @@ export class Video {
     }
 
     async loop(loopCount: number): Promise<Video> {
-        const fsSourceName = `LOOP ${this.name}`;
-        const fsDistName = `LOOPED ${this.name}`;
+        const fsSourceName = `${++i} ${this.name}`;
+        const fsDistName = `${++i} ${this.name}`;
+
+        if (isRunning) {
+            await sleep(1000);
+            return this.loop(loopCount);
+        }
+        isRunning = true;
 
         try {
             this.ffmpeg.FS('writeFile', fsSourceName, await fetchFile(this.videoUri));
@@ -37,29 +80,35 @@ export class Video {
             const data = this.ffmpeg.FS('readFile', fsDistName);
             return new Video(this.ffmpeg, this.name, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
         } finally {
+            isRunning = false;
             this.ffmpeg.FS('unlink', fsSourceName);
             this.ffmpeg.FS('unlink', fsDistName);
         }
     }
 
-    async compress () {
-        const fsSourceName = `COMPRESS ${this.name}`;
-        const fsDistName = `COMPRESSED ${this.name}`;
+    async compress(type: CompressType): Promise<Video> {
+        const fsSourceName = `${++i} ${this.name}`;
+        const fsDistName = `${++i} ${this.name}`;
+
+        if (isRunning) {
+            await sleep(1000);
+            return this.compress(type);
+        }
+        isRunning = true;
 
         try {
             this.ffmpeg.FS('writeFile', fsSourceName, await fetchFile(this.videoUri));
             await this.ffmpeg.run(
                 '-i',
                 fsSourceName,
-                '-vf', 'scale=420:-2,setsar=1:1',
-                '-c:v', 'libx264',
-                '-pix_fmt', 'yuv420p',
+                ...compress[type],
                 fsDistName,
             );
 
             const data = this.ffmpeg.FS('readFile', fsDistName);
             return new Video(this.ffmpeg, this.name, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
         } finally {
+            isRunning = false;
             this.ffmpeg.FS('unlink', fsSourceName);
             this.ffmpeg.FS('unlink', fsDistName);
         }

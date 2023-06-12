@@ -4,4 +4,10 @@
     export let video: Video;
 </script>
 
-<video src={video.videoUri} controls></video>
+<video class="video" src={video.videoUri} controls></video>
+
+<style>
+    .video {
+        height: 200px;
+    }
+</style>

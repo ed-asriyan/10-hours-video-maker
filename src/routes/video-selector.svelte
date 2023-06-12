@@ -10,7 +10,6 @@
 
 <script lang="ts">
     import {Video, VideoProperties} from './video';
-    import VideoView from './video-view.svelte';
 
     export let ffmpeg;
 
@@ -18,16 +17,8 @@
     const loadSource = async function (file): Promise<Source> {
         const fileUrl = window.URL.createObjectURL(file);
 
-        let video = new Video(ffmpeg, file.name, fileUrl);
-        let properties = await VideoProperties.load(video);
-
-        const compressedVideo = await video.compress();
-        const compressedProperties = await VideoProperties.load(compressedVideo);
-
-        if (compressedProperties.size < properties.size) {
-            video = compressedVideo;
-            properties = compressedProperties;
-        }
+        const video = new Video(ffmpeg, file.name, fileUrl);
+        const properties = await VideoProperties.load(video);
 
         return {
             video,
@@ -39,13 +30,10 @@
 
 <input type="file" on:change={({target: {files}}) => source = loadSource(files[0])}/>
 {#if source}
+    <hr/>
     {#await source}
-        <div>Compressing video</div>
+        <div>Loading...</div>
     {:then source}
-        <div>
-            <VideoView video={source.video}/>
-        </div>
-        <hr/>
         <div>
             <VideoMaker video={source.video} properties={source.properties}/>
         </div>

@@ -2,7 +2,7 @@
     import {createFFmpeg} from '@ffmpeg/ffmpeg';
     import VideoSelector from './video-selector.svelte';
 
-    let logs: string[] = [];
+    let logs: string[] = [''];
 
     const ffmpeg = createFFmpeg({log: true});
     ffmpeg.setLogger(({message}) => {
@@ -17,6 +17,8 @@
 {:then _}
     <VideoSelector ffmpeg="{ffmpeg}"/>
 
+    <hr/>
+    <div>{logs[logs.length - 1]}</div>
     <hr/>
     <div class="log">
         {#each logs as log}

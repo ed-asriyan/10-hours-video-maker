@@ -1,23 +1,35 @@
 <script lang="ts">
     import VideoView from './video-view.svelte';
-    import type {Properties, Video} from './video';
-    import {VideoProperties} from './video';
-    import {formatSize} from './utils';
-    import storageLimit from './storage-limit';
+    import VideoSize from './video-size.svelte';
+    import {VideoProperties, Video, CompressType} from './video';
 
     export let video: Video;
     export let properties: VideoProperties;
 
     let targetDurationMinutes: number = 600;
-
     $: targetDuration = targetDurationMinutes * 60;
     $: targetLoopCount = Math.ceil(targetDuration / properties.duration);
 
-    $: forecastProperties = {
-        size: properties.size * targetLoopCount,
-        duration: properties.duration * targetLoopCount
-    } as Properties;
+    const compress = function (type: CompressType): Promise<Video> {
+        return video.compress(type);
+    };
 
+    const types = {
+        '480px': CompressType.u420,
+        '240px': CompressType.u240,
+        '140px': CompressType.u140,
+        '64px': CompressType.u64,
+    };
+
+    const videoTypes: { name: string, video: Promise<Video> }[] = [{
+        name: 'Original',
+        video: new Promise(resolve => resolve(video)) as Promise<Video>,
+    }].concat(Object.entries(types).map(([name, type]) => ({
+        name,
+        video: compress(type),
+    })));
+
+    let videoToLoopIndex = 0;
     let result: Promise<Video>;
     const make = async function (video: Video, loopCount: number) {
         return await video.loop(loopCount);
@@ -29,14 +41,37 @@
 </script>
 
 <div>Duration (minutes): <input type="number" bind:value={targetDurationMinutes} min="0"/></div>
-<br/>
-<div>Size forecast: {formatSize(forecastProperties.size)}.</div>
-{#if forecastProperties.size > storageLimit}
-    <div style="color: red">
-        Conversion will fail since it exceeds your browser storage size: {Math.round(storageLimit / 1024 / 1024)}Mb.
-    </div>
-{/if}
-<button on:click={() => result = make(video, targetLoopCount)}>Run!</button>
+<div class="video-selector">
+    {#each videoTypes as type, i}
+        <div class="video-item" class:selected={videoToLoopIndex === i}>
+            <div class="video-item-title">{type.name}</div>
+            <div class="video">
+                {#await type.video}
+                    Compressing...
+                {:then video}
+                    <div>
+                        <VideoView video={video}/>
+                    </div>
+                    <div>
+                        <VideoSize video={video} loopCount={targetLoopCount}/>
+                    </div>
+                    <div>
+                        {#if videoToLoopIndex === i}
+                            <button disabled>Selected</button>
+                        {:else}
+                            <button on:click={() => videoToLoopIndex = i}>Select</button>
+                        {/if}
+                    </div>
+                {:catch e}
+                    Error {e}
+                {/await}
+            </div>
+        </div>
+    {/each}
+</div>
+<hr/>
+
+<button on:click={async () => result = make(await videoTypes[videoToLoopIndex].video, targetLoopCount)}>Run!</button>
 
 {#if result}
     {#await result}
@@ -47,12 +82,40 @@
         </div>
         <div>
             <button on:click={() => download(resultVideo)}>Download</button>
-            {#await VideoProperties.load(resultVideo)}
-            {:then resultVideoProperties}
-                <span>Size: {formatSize(resultVideoProperties.size)}</span>
-            {/await}
+            <div>
+                <VideoSize video={resultVideo}/>
+            </div>
         </div>
     {:catch e}
         {e}
     {/await}
 {/if}
+
+<style>
+    .video-selector {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .video-item {
+        text-align: center;
+        width: 250px;
+        margin: 5px;
+        padding: 5px;
+        border: transparent solid 1px;
+    }
+
+    .video-item.selected {
+        border: black solid 1px;
+        border-radius: 5px;
+    }
+
+    .video-item button {
+        margin-top: 5px;
+    }
+
+    .video-item-title {
+        font-weight: bold;
+    }
+</style>
