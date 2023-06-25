@@ -4,17 +4,20 @@
 
     let logs: string[] = [''];
 
-    const ffmpeg = createFFmpeg({log: true});
-    ffmpeg.setLogger(({message}) => {
-        logs.push(message);
-        logs = logs;
-    })
-    const fetchingFfmpeg = ffmpeg.load();
+    const loadFfmpeg = async function () {
+        const ffmpeg = createFFmpeg({log: true});
+        ffmpeg.setLogger(({message}) => {
+            logs.push(message);
+            logs = logs;
+        })
+        await ffmpeg.load();
+        return ffmpeg;
+    }
 </script>
 
-{#await fetchingFfmpeg}
-    Loading...
-{:then _}
+{#await loadFfmpeg()}
+    Loading webassembly...
+{:then ffmpeg}
     <VideoSelector ffmpeg="{ffmpeg}"/>
 
     <hr/>
