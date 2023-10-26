@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type {Video} from './video';
+    import type {Video} from '../video';
 
     export let video: Video;
 </script>

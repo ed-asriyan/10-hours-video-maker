@@ -7,10 +7,11 @@ let i = 0;
 let isRunning = false;
 
 export enum CompressType {
-    'u420',
-    'u240',
-    'u140',
-    'u64',
+    original,
+    u420,
+    u240,
+    u140,
+    u64,
 }
 
 const sleep = function (ms: number): Promise<void> {
@@ -18,6 +19,7 @@ const sleep = function (ms: number): Promise<void> {
 };
 
 const compress: {[x in CompressType]: string[]} = {
+    [CompressType.original]: [],
     [CompressType.u64]: [
         '-vf', 'scale=64:-2,setsar=1:1',
         '-c:v', 'libx264',
@@ -40,15 +42,30 @@ const compress: {[x in CompressType]: string[]} = {
     ],
 };
 
+export interface VideoConstructorOptions {
+    ffmpeg: FFmpeg;
+    name: string;
+    uri: string;
+}
+
 export class Video {
     private readonly ffmpeg: FFmpeg;
     private readonly name: string;
-    readonly videoUri: string
+    readonly videoUri: string;
+    public duration: number = NaN;
+    public size: number = NaN;
 
-    constructor(ffmpeg: FFmpeg, name: string, videoUri: string) {
+    static async load(options: VideoConstructorOptions): Promise<Video> {
+        const result = new Video(options);
+        result.duration = await result.getDuration();
+        result.size = await result.getSize();
+        return result;
+    }
+
+    private constructor({ffmpeg, name, uri}: VideoConstructorOptions) {
         this.ffmpeg = ffmpeg;
         this.name = name;
-        this.videoUri = videoUri;
+        this.videoUri = uri;
     }
 
     async loop(loopCount: number): Promise<Video> {
@@ -78,7 +95,11 @@ export class Video {
                 fsDistName,
             );
             const data = this.ffmpeg.FS('readFile', fsDistName);
-            return new Video(this.ffmpeg, this.name, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
+            return await Video.load({
+                ffmpeg: this.ffmpeg,
+                name: this.name,
+                uri: URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})),
+            });
         } finally {
             isRunning = false;
             this.ffmpeg.FS('unlink', fsSourceName);
@@ -87,6 +108,10 @@ export class Video {
     }
 
     async compress(type: CompressType): Promise<Video> {
+        if (type === CompressType.original) {
+            return this;
+        }
+
         const fsSourceName = `${++i} ${this.name}`;
         const fsDistName = `${++i} ${this.name}`;
 
@@ -106,7 +131,11 @@ export class Video {
             );
 
             const data = this.ffmpeg.FS('readFile', fsDistName);
-            return new Video(this.ffmpeg, this.name, URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})));
+            return await Video.load({
+                ffmpeg: this.ffmpeg,
+                name: this.name,
+                uri: URL.createObjectURL(new Blob([data.buffer], {type: 'video/mp4'})),
+            });
         } finally {
             isRunning = false;
             this.ffmpeg.FS('unlink', fsSourceName);
@@ -118,44 +147,17 @@ export class Video {
         // @ts-ignore
         saveAs(this.videoUri, this.name, 'video/mp4');
     }
-}
 
-export interface Properties {
-    duration: number;
-    size: number;
-}
-
-export class VideoProperties implements Properties {
-    private readonly video: Video;
-    duration: number = NaN;
-    size: number = NaN;
-
-    private constructor(video: Video) {
-        this.video = video;
-    }
-
-    private async load() {
-        this.duration = await this.loadDuration();
-        this.size = await this.loadSize();
-    }
-
-    private async loadDuration(): Promise<number> {
+    private async getDuration(): Promise<number> {
         const el = document.createElement('video');
-        el.setAttribute('src', this.video.videoUri);
-        return new Promise((resolve, reject) => {
+        el.setAttribute('src', this.videoUri);
+        return await new Promise((resolve, reject) => {
             el.addEventListener('loadedmetadata', ({target: {duration}}) => resolve(duration));
             el.addEventListener('error', reject);
         });
     }
 
-    private async loadSize(): Promise<number> {
-        const blob = await fetch(this.video.videoUri).then(r => r.blob());
-        return blob.size;
-    }
-
-    static async load(video: Video): Promise<VideoProperties> {
-        const result = new VideoProperties(video);
-        await result.load();
-        return result;
+    private async getSize(): Promise<number> {
+        return(await fetch(this.videoUri).then(r => r.blob())).size;
     }
 }
