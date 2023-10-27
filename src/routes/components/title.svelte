@@ -1,14 +1,7 @@
 <script lang="ts">
-    export let minutes: number;
+    import { formatDuration } from '../utils';
 
-    $: hours = Math.round(minutes / 60);
-    $: title = `${hours} hour${hours === 1 ? '' : 's'} video maker`;
+    export let minutes: number;
 </script>
 
-<div class="title">{ title }</div>
-
-<style lang="scss">
-    .title {
-        font-size: 5rem;
-    }
-</style>
+<h1 class="uk-heading-large">{ minutes ? formatDuration(minutes) : 'Not a'} video maker</h1>

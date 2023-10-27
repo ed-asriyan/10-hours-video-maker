@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { slide } from 'svelte/transition';
     import { createFFmpeg } from '@ffmpeg/ffmpeg';
+    import { slide } from 'svelte/transition';
     import Title from './components/title.svelte';
     import Loader from './components/loader.svelte';
     import Form from './form.svelte';
+    import Error from './components/error.svelte';
 
     const loadFfmpeg = async function () {
         const ffmpeg = createFFmpeg({log: true});
@@ -11,24 +12,27 @@
         return ffmpeg;
     }
 
-    let minutes: number = 60;
+    let minutes: number = 600;
 </script>
 
 <div class="container flex">
     <div class="content flex flex-center">
-        <div class="title">
+        <div class="title center">
             <Title minutes={minutes}/>
+            <hr class="uk-divider-icon">
         </div>
         {#await loadFfmpeg()}
             <div transition:slide>
-                <Loader/>
+                <Loader>
+                    Loading webassembly...
+                    <br/>
+                    It may take up to 10 seconds
+                </Loader>
             </div>
         {:then ffmpeg}
-            <div transition:slide>
-                <Form ffmpeg={ffmpeg}/>
-            </div>
+            <Form ffmpeg={ffmpeg} bind:duration={minutes}/>
         {:catch e}
-            Error :( {e}
+            <Error error={e.toString()}/>
         {/await}
     </div>
 </div>
@@ -39,6 +43,8 @@
     :global(html, body) {
         margin: 0;
         padding: 0;
+        overflow-y: scroll;
+        min-height: 100hv;
     }
 
     .flex {
@@ -55,11 +61,10 @@
         min-height: 100vh;
         padding: 0;
         margin: 0;
-        background-color: #c3c3c3;
+        background-color: hsl(0, 0%, 96%);
 
         & .title {
-            margin-top: -2 * $title-height;
-            margin-bottom: $title-height;
+            margin-bottom: 1rem;
         }
 
         & .content {

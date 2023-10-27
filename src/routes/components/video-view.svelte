@@ -8,6 +8,7 @@
 
 <style>
     .video {
-        height: 200px;
+        max-height: 20rem;
+        width: 100%;
     }
 </style>

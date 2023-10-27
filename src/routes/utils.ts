@@ -1,11 +1,8 @@
-export const formatDuration = function (ms: number): string {
+export const formatDuration = function (minutes: number): string {
     // https://www.30secondsofcode.org/js/s/format-duration/
-    if (ms < 0) ms = -ms
     const time = {
-        hour: Math.floor(ms / 3600) % 24,
-        minute: Math.floor(ms / 60) % 60,
-        second: Math.floor(ms) % 60,
-        millisecond: Math.floor((ms - Math.floor(ms)) * 1000)
+        hour: Math.floor(minutes / 60),
+        minute: minutes % 60
     }
     return Object.entries(time)
         .filter((val) => val[1] !== 0)

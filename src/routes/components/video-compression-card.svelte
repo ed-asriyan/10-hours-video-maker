@@ -1,9 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
-    import VideoSize from './video-size.svelte';
     import VideoView from './video-view.svelte';
     import type { CompressType, Video } from '../video';
     import Loader from './loader.svelte';
+    import { formatSize } from '../utils';
+    import { slide } from 'svelte/transition';
+    import storageLimit from '../storage-limit';
 
     const dispatch = createEventDispatcher();
 
@@ -12,57 +14,32 @@
     export let compression: CompressType;
     export let loopCount: number;
     export let disabled: boolean = false;
-
-    const onChoose = function(video: Video) {
-        dispatch('choose', { video });
-    };
 </script>
 
 <div class="container">
-    <div class="title">Type: {name}</div>
+    <h4 class="uk-heading-divider">{name}</h4>
     {#await video.compress(compression)}
-        <Loader/>
-    {:then compressedVideo} 
-    <div class="video">
-        <VideoView video={compressedVideo}/>
-    </div>
-    <div class="size">
-        <VideoSize video={compressedVideo} loopCount={loopCount}/>
-    </div>
-    <div>
-        <button on:click={() => onChoose(compressedVideo)} disabled={disabled}>Choose</button>
-    </div>
+        <div transition:slide>
+            <Loader/>
+        </div>   
+    {:then compressedVideo}
+        <div transition:slide class="video">
+            <VideoView video={compressedVideo}/>
+        </div>
+        <div transition:slide class="margin-top">
+            <button on:click={() => dispatch('choose', { video: compressedVideo })} class="uk-button uk-button-default" disabled={disabled}>
+                {#if compressedVideo.size * loopCount > storageLimit}
+                    (!)
+                {/if}
+                Render (~{formatSize(compressedVideo.size * loopCount)})
+            </button>
+        </div>
     {/await}
 </div>
 
 <style lang="scss">
     .container {
-        background-color: white;
-        border: snow 0.5px solid;
         text-align: center;
-        padding: 1rem;
-        margin: 1rem;
-        border-radius: 3px;
-        transition: box-shadow 100ms ease-in-out;
-
-        &:hover {
-            box-shadow: 4px 4px 7px gray;
-        }
-
-        & .title {
-            font-weight: bold;
-        }
-
-        & .video {
-            text-align: center;
-            width: 250px;
-            margin: 5px;
-            padding: 5px;
-            border: transparent solid 1px;
-        }
-
-        & .size {
-            font-weight: lighter;
-        }
+        width: 15rem;
     }
 </style>

@@ -14,11 +14,8 @@
     const dispatch = createEventDispatcher();
 
     export let video: Video;
+    export let loopCount: number;
     export let disabled: boolean = false;
-
-    let targetDurationMinutes: number = 600;
-    $: targetDuration = targetDurationMinutes * 60;
-    $: targetLoopCount = Math.ceil(targetDuration / video.duration);
 
     interface Options {
         name: string;
@@ -42,24 +39,18 @@
             compression: CompressType.u64,
         },
     ];
-
-    const choose = function(video: Video) {
-        dispatch('choose', { video, loopCount: targetLoopCount})
-    }
 </script>
-
-<div>Duration (minutes): <input type="number" bind:value={targetDurationMinutes} min="0"/></div>
 
 <div class="video-selector">
     {#each options as option}
         <div class="video-item">
             <VideoCompressionCard 
                 video={video}
-                loopCount={targetLoopCount}
+                loopCount={loopCount}
                 compression={option.compression}
                 name={option.name}
                 disabled={disabled}
-                on:choose={() => choose(video)}
+                on:choose={() => dispatch('choose', { video })}
             />
         </div>
     {/each}
@@ -70,5 +61,9 @@
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
+
+        & .video-item {
+            margin: 1rem;
+        }
     }
 </style>

@@ -50,7 +50,7 @@ export interface VideoConstructorOptions {
 
 export class Video {
     private readonly ffmpeg: FFmpeg;
-    private readonly name: string;
+    readonly name: string;
     readonly videoUri: string;
     public duration: number = NaN;
     public size: number = NaN;
@@ -152,6 +152,7 @@ export class Video {
         const el = document.createElement('video');
         el.setAttribute('src', this.videoUri);
         return await new Promise((resolve, reject) => {
+            // @ts-ignore
             el.addEventListener('loadedmetadata', ({target: {duration}}) => resolve(duration));
             el.addEventListener('error', reject);
         });
