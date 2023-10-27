@@ -5,10 +5,18 @@
     import Loader from './components/loader.svelte';
     import Form from './form.svelte';
     import Error from './components/error.svelte';
+    import { parseTimeSpan } from './utils';
+    import { seconds } from './store';
 
     const loadFfmpeg = async function () {
         const ffmpeg = createFFmpeg({log: true});
         await ffmpeg.load();
+        ffmpeg.setLogger(({message}) => {
+            const sec = parseTimeSpan(message);
+            if (Number.isFinite(sec)) {
+                seconds.set(sec);
+            }
+        })
         return ffmpeg;
     }
 

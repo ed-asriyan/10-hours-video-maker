@@ -5,11 +5,12 @@
     import VideoSelector from './components/video-selector.svelte';
     import VideoView from './components/video-view.svelte';
     import VideoCompressionForm, { type RenderConfig } from './components/video-compression-form.svelte';
-    import Loader from './components/loader.svelte';
     import DurationSelector from './components/duration-selector.svelte';
-    import { formatSize } from './utils';
+    import { formatDuration, formatSize } from './utils';
     import storageLimit from './storage-limit';
     import Error from './components/error.svelte';
+    import { seconds } from './store';
+    import Progress from './components/progress.svelte';
 
     export let ffmpeg: FFmpeg;
     export let duration: number = 600;
@@ -33,59 +34,58 @@
 </script>
 
 {#if !renderingPromise}
-<div class="uk-flex uk-flex-column uk-flex-middle">
-    <div>
-        <h3>1. Select video</h3>
-        <div class="uk-margin">
-            Video you select are being processed locally in your browser.<br/>It's not being uploaded to any remote servers.
-        </div>
-        <div class="uk-form-controls uk-margin-bottom">
-        <VideoSelector ffmpeg={ffmpeg} bind:video={sourceVideo} disabled={isRendering}>
-            {#if sourceVideo}
-                Select another video
-            {:else}
-                Select video
-            {/if}
-        </VideoSelector>
-        {#if sourceVideo}
-            <span transition:slide class="uk-padding-left">{sourceVideo.name}</span>
-        {/if}
-        </div>
-        {#if sourceVideo !== null}
-            <h3 class="uk-margin-large-top">2. Select result duration</h3>
-            <DurationSelector bind:duration={duration}/>
-            <h3 class="uk-margin-large-top">3. Select compression type</h3>
+    <div class="uk-flex uk-flex-column uk-flex-middle">
+        <div>
+            <h3>1. Select video</h3>
             <div class="uk-margin">
-                Your brower's limitation is {formatSize(storageLimit)} for output video.
+                Video you select are being processed locally in your browser.<br/>It's not being uploaded to any remote servers.
+            </div>
+            <div class="uk-form-controls uk-margin-bottom">
+            <VideoSelector ffmpeg={ffmpeg} bind:video={sourceVideo} disabled={isRendering}>
+                {#if sourceVideo}
+                    Select another video
+                {:else}
+                    Select video
+                {/if}
+            </VideoSelector>
+            {#if sourceVideo}
+                <span transition:slide class="uk-padding-left">{sourceVideo.name}</span>
+            {/if}
+            </div>
+            {#if sourceVideo !== null}
+                <h3 class="uk-margin-large-top">2. Select result duration</h3>
+                <DurationSelector bind:duration={duration}/>
+                <h3 class="uk-margin-large-top">3. Select compression type</h3>
+                <div class="uk-margin">
+                    Your brower's limitation is {formatSize(storageLimit)} for output video.
+                </div>
+            {/if}
+        </div>
+
+        {#if sourceVideo !== null}
+            <div transition:slide>
+                <VideoCompressionForm 
+                    video={sourceVideo} 
+                    disabled={isRendering || !duration}
+                    loopCount={targetLoopCount}
+                    on:choose={({ detail: { video } }) => renderingPromise = render(video, targetLoopCount)}
+                />
             </div>
         {/if}
     </div>
-
-    {#if sourceVideo !== null}
-        <div transition:slide>
-            <VideoCompressionForm 
-                video={sourceVideo} 
-                disabled={isRendering || !duration}
-                loopCount={targetLoopCount}
-                on:choose={({ detail: { video } }) => renderingPromise = render(video, targetLoopCount)}
-            />
-        </div>
-    {/if}
-</div>
 {:else}
     {#await renderingPromise}
-        <div class="uk-text-left" transition:slide>
-            <Loader>
-                Rendering loooong video...
-                <br>
-                Do not close this tab and browser. 
-            </Loader>
+        <div class="uk-text-center" transition:slide>
+            <Progress value={$seconds} max={sourceVideo.duration * targetLoopCount}/>
+            <b>{formatDuration($seconds / 60)}</b> of <b>{formatDuration(sourceVideo.duration * targetLoopCount / 60)}</b> is done
+            <br>
+            Do not close this tab and browser. 
             <div class="uk-margin-top">
-                <button on:click={() => location.reload()} class="uk-button uk-button-default">Cansel</button>
+                <button on:click={() => location.reload()} class="uk-button uk-button-default">Cancel</button>
             </div>
         </div>
     {:then resultVideo}
-        <div class="center" transition:slide>
+        <div class="uk-text-center" transition:slide>
             <div>
                 <VideoView video={resultVideo}/>
             </div>
