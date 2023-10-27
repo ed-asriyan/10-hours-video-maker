@@ -26,24 +26,24 @@
             name: 'Original',
             compression: CompressType.original,
         }, {
-            name: '480px',
-            compression: CompressType.u420,
+            name: '64px',
+            compression: CompressType.u64,
+        },{
+            name: '140px',
+            compression: CompressType.u140,
         }, {
             name: '240px',
             compression: CompressType.u240,
         }, {
-            name: '140px',
-            compression: CompressType.u140,
-        }, {
-            name: '64px',
-            compression: CompressType.u64,
+            name: '480px',
+            compression: CompressType.u420,
         },
     ];
 </script>
 
-<div class="video-selector">
+<div class="uk-flex uk-flex-wrap uk-flex-center">
     {#each options as option}
-        <div class="video-item">
+        <div class="uk-margin-right uk-margin-bottom uk-flex-stretch">
             <VideoCompressionCard 
                 video={video}
                 loopCount={loopCount}
@@ -55,15 +55,3 @@
         </div>
     {/each}
 </div>
-
-<style>
-    .video-selector {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-
-        & .video-item {
-            margin: 1rem;
-        }
-    }
-</style>

@@ -33,13 +33,13 @@
 </script>
 
 {#if !renderingPromise}
-<div class="vertical-center">
+<div class="uk-flex uk-flex-column uk-flex-middle">
     <div>
         <h3>1. Select video</h3>
         <div class="uk-margin">
             Video you select are being processed locally in your browser.<br/>It's not being uploaded to any remote servers.
         </div>
-        <div class="uk-form-controls margin-bottom">
+        <div class="uk-form-controls uk-margin-bottom">
         <VideoSelector ffmpeg={ffmpeg} bind:video={sourceVideo} disabled={isRendering}>
             {#if sourceVideo}
                 Select another video
@@ -48,13 +48,13 @@
             {/if}
         </VideoSelector>
         {#if sourceVideo}
-            <span transition:slide class="padding-left">{sourceVideo.name}</span>
+            <span transition:slide class="uk-padding-left">{sourceVideo.name}</span>
         {/if}
         </div>
         {#if sourceVideo !== null}
-            <h3 class="margin-top-2x">2. Select result duration</h3>
+            <h3 class="uk-margin-large-top">2. Select result duration</h3>
             <DurationSelector bind:duration={duration}/>
-            <h3 class="margin-top-2x">3. Select compression type</h3>
+            <h3 class="uk-margin-large-top">3. Select compression type</h3>
             <div class="uk-margin">
                 Your brower's limitation is {formatSize(storageLimit)} for output video.
             </div>
@@ -74,13 +74,13 @@
 </div>
 {:else}
     {#await renderingPromise}
-        <div class="center" transition:slide>
+        <div class="uk-text-left" transition:slide>
             <Loader>
                 Rendering loooong video...
                 <br>
                 Do not close this tab and browser. 
             </Loader>
-            <div class="margin-top">
+            <div class="uk-margin-top">
                 <button on:click={() => location.reload()} class="uk-button uk-button-default">Cansel</button>
             </div>
         </div>
@@ -89,10 +89,10 @@
             <div>
                 <VideoView video={resultVideo}/>
             </div>
-            <div class="margin-top">
+            <div class="uk-margin-top">
                 <button on:click={() => resultVideo.download()} class="uk-button uk-button-secondary">Download ({formatSize(resultVideo.size)})</button>
             </div>
-            <div class="margin-top">
+            <div class="uk-margin-top">
                 <button on:click={() => location.reload()} class="uk-button uk-button-default">Render another video</button>
             </div>
         </div>

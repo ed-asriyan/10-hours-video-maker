@@ -22,7 +22,6 @@
             });
         } catch (e) {
             alert(`Error while loading the video:\n${e}`);
-            
         }
     };
 </script>

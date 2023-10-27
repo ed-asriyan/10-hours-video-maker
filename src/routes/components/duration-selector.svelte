@@ -27,16 +27,16 @@
     };
 </script>
 
-<div>
+<div class="uk-flex uk-flex-wrap">
     {#each options as option}
-        <span class="margin-right">
+        <div class="uk-margin-right uk-margin-bottom uk-flex-stretch">
             <button on:click={() => click(option)} class={duration === option.value ? 'uk-button uk-button-secondary' : 'uk-button uk-button-default'}>{option.title}</button>
-        </span>
+        </div>
     {/each}
-    <span class={!duration ? 'uk-form-danger' : ''}>
+    <span class="{!duration ? 'uk-form-danger' : ''} uk-margin-right uk-margin-bottom">
         {#if isCustom}
             <input type="number" bind:value={duration} class="uk-input uk-form-width-small custom {!duration ? 'uk-form-danger' : ''}" min="0" placeholder="Minutes" />
-            <span class="custom-label padding-left">
+            <span class="custom-label">
                 ← Enter minutes
                 {#if !duration}
                     or click a button

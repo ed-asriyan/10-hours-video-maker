@@ -11,42 +11,6 @@ $global-link-color: #DA7D02;
 // 4. Import UIkit.
 @import "uikit/src/scss/uikit-theme.scss";
 
-.center {
-    text-align: center;
-}
-
-.bold {
-    font-weight: bold;
-}
-
 .uk-button-default {
     background-color: white !important;
 }
-
-.vertical-center {
-    display: flex;
-    flex-direction: column;
-    justify-items: center;
-    align-items: center;;
-}
-
-$step: 1rem;
-
-@each $type in padding, margin {
-    @each $side in left, right, top, bottom {
-        .#{$type}-#{$side} {
-            #{$type}-#{$side}: $step;
-        }
-    }
-}
-
-@for $x from 2 through 3 { 
-    @each $type in padding, margin {
-        @each $side in left, right, top, bottom {
-            .#{$type}-#{$side}-#{$x}x {
-                #{$type}-#{$side}: $x * $step;
-            }
-        }
-    }
-}
-

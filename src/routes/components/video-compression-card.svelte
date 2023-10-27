@@ -16,17 +16,17 @@
     export let disabled: boolean = false;
 </script>
 
-<div class="container">
+<div class="uk-card uk-card-body uk-card-default uk-card-hover">
     <h4 class="uk-heading-divider">{name}</h4>
     {#await video.compress(compression)}
         <div transition:slide>
             <Loader/>
         </div>   
     {:then compressedVideo}
-        <div transition:slide class="video">
+        <div transition:slide class="video uk-margin-bottom">
             <VideoView video={compressedVideo}/>
         </div>
-        <div transition:slide class="margin-top">
+        <div transition:slide class="uk-margin-top">
             <button on:click={() => dispatch('choose', { video: compressedVideo })} class="uk-button uk-button-default" disabled={disabled}>
                 {#if compressedVideo.size * loopCount > storageLimit}
                     (!)
@@ -36,10 +36,3 @@
         </div>
     {/await}
 </div>
-
-<style lang="scss">
-    .container {
-        text-align: center;
-        width: 15rem;
-    }
-</style>

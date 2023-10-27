@@ -15,9 +15,9 @@
     let minutes: number = 600;
 </script>
 
-<div class="container flex">
-    <div class="content flex flex-center">
-        <div class="title center">
+<div class="container uk-flex">
+    <div class="content uk-flex uk-flex-column uk-flex-center uk-flex-middle">
+        <div class="title uk-text-left">
             <Title minutes={minutes}/>
             <hr class="uk-divider-icon">
         </div>
@@ -30,9 +30,13 @@
                 </Loader>
             </div>
         {:then ffmpeg}
-            <Form ffmpeg={ffmpeg} bind:duration={minutes}/>
+            <div transition:slide>
+                <Form ffmpeg={ffmpeg} bind:duration={minutes}/>
+            </div>
         {:catch e}
+        <div transition:slide class="uk-flex uk-flex-column uk-flex-middle">
             <Error error={e.toString()}/>
+        </div>
         {/await}
     </div>
 </div>
@@ -47,25 +51,10 @@
         min-height: 100hv;
     }
 
-    .flex {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .flex-center {
-        justify-content: center;
-    }
-
     .container {
         min-height: 100vh;
-        padding: 0;
-        margin: 0;
+        padding: 0 1rem;
         background-color: hsl(0, 0%, 96%);
-
-        & .title {
-            margin-bottom: 1rem;
-        }
 
         & .content {
             flex: 1;
